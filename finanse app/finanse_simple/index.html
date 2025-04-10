@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Finanse - Roczne Wydatki</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2em;
+      background: #f7f7f7;
+      color: #333;
+    }
+    h1 {
+      font-size: 1.8em;
+      color: #2c3e50;
+    }
+    .summary {
+      margin-bottom: 1em;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-top: 1em;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    canvas {
+      max-width: 600px;
+      margin: 2em auto;
+      display: block;
+    }
+    .footer {
+      text-align: center;
+      font-size: 0.9em;
+      color: #888;
+      margin-top: 4em;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Finanse - Roczne Wydatki</h1>
+
+  <div class="summary">Całkowita suma: <span id="total">0 zł</span></div>
+
+  <table id="expenses">
+    <thead>
+      <tr>
+        <th>ID</th><th>Kwota</th><th>Kategoria</th><th>Data</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <canvas id="chart"></canvas>
+
+  <div class="footer">Wygenerowane lokalnie z danych: <code>C:\Users\Mateusz\GMT-Mati\finanse app\expenses_export.csv</code></div>
+
+  <script>
+    async function loadCSV() {
+      const res = await fetch("expenses_export.csv");
+      const data = await res.text();
+      const rows = data.trim().split("\n").slice(1).map(r => r.split(","));
+      const tbody = document.querySelector("tbody");
+      let total = 0;
+      const categories = {};
+
+      rows.forEach(row => {
+        const [id, amount, category, date] = row;
+        total += parseFloat(amount);
+        categories[category] = (categories[category] || 0) + parseFloat(amount);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${id}</td><td>${amount} zł</td><td>${category}</td><td>${date}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("total").textContent = total.toFixed(2) + " zł";
+
+      const ctx = document.getElementById("chart").getContext("2d");
+      new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: Object.keys(categories),
+          datasets: [{
+            data: Object.values(categories),
+            backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#66bb6a", "#ba68c8"]
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Wydatki wg kategorii' }
+          }
+        }
+      });
+    }
+
+    loadCSV();
+  </script>
+</body>
+</html>
